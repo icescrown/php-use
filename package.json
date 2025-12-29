@@ -1,0 +1,151 @@
+{
+  "name": "php-use",
+  "displayName": "php use",
+  "description": "Manage PHP use statements",
+  "version": "0.0.1",
+  "publisher": "icescrown",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/icescrown/php-use.git"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:php"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "php-use.removeUnusedImports",
+        "title": "Remove Unused Imports",
+        "category": "PHP"
+      },
+      {
+        "command": "php-use.importCurrentClass",
+        "title": "Import Current Class",
+        "category": "PHP"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "php-use.removeUnusedImports",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "editorLangId == php"
+      },
+      {
+        "command": "php-use.importCurrentClass",
+        "key": "ctrl+alt+i",
+        "mac": "cmd+alt+i",
+        "when": "editorLangId == php"
+      }
+    ],
+    "languages": [
+      {
+        "id": "php",
+        "extensions": [".php"]
+      }
+    ],
+    "diagnostics": [
+      {
+        "language": "php",
+        "scope": "file",
+        "source": "php-use"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "editorLangId == php",
+          "command": "php-use.removeUnusedImports",
+          "group": "1_modification"
+        }
+      ]
+    },
+    "codeActions": {
+      "quickfix": [
+        {
+          "command": "php-use.removeUnusedImports",
+          "when": "editorLangId == php",
+          "kind": "source.fixAll",
+          "diagnostics": [
+            {
+              "source": "php-use"
+            }
+          ]
+        }
+      ]
+    },
+    "configuration": {
+      "title": "php use",
+      "properties": {
+        "php-use.enableAutoDetect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic detection of unused imports"
+        },
+        "php-use.showDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show diagnostics warnings (for unused imports and non-imported classes)"
+        },
+        "php-use.diagnosticSeverity": {
+          "type": "string",
+          "default": "Information",
+          "enum": ["Warning", "Information", "Hint"],
+          "description": "Diagnostic severity level for unused imports and non-imported classes"
+        },
+        "php-use.showNotifications": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show notification messages when removing unused imports"
+        },
+        "php-use.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["**/node_modules/**", "**/vendor/**"],
+          "description": "Glob patterns for files and folders to exclude from search"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.100.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "typescript-eslint": "^8.48.1",
+    "eslint": "^9.39.1",
+    "esbuild": "^0.27.1",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.9.3",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
+
+
+
+
+
+
