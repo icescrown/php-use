@@ -5,9 +5,9 @@
 ## ✨ 功能特性
 
 - **删除未使用的导入**：自动检测并删除 PHP 文件中未使用的 `use` 语句
-- **导入未声明的类**：快速为代码中使用但未导入的类添加 `use` 语句
+- **导入未声明的类**：通过快捷键手动为代码中使用但未导入的类添加 `use` 语句
 - **支持多种 use 语句格式**：完美支持单个 use 语句和分组 use 语句
-- **智能诊断**：实时检测并高亮显示未使用的导入和未导入的类
+- **智能诊断**：实时检测并高亮显示未使用的导入
 - **便捷操作方式**：提供快捷键、右键菜单和快速修复选项
 - **个性化配置**：支持多种可自定义的设置选项
 - **仅针对 PHP 文件**：安全可靠，避免意外修改其他类型的文件
@@ -29,17 +29,6 @@
 3. 扩展将自动删除所有未使用的 `use` 语句
 
 ### 导入未声明的类
-
-1. 在 VSCode 中打开一个 PHP 文件
-2. 当使用了未导入的类时，该类名将被高亮显示
-3. 将光标放在未导入的类名上，然后使用以下任一方式：
-   - 按下 `Ctrl+.` (Windows/Linux) 或 `Cmd+.` (Mac) 打开快速修复菜单
-   - 点击编辑器中出现的灯泡图标
-4. 选择 "Import class Xxx" 选项
-5. 如果有多个匹配的类，选择你想要导入的类
-6. 扩展将自动添加相应的 `use` 语句
-
-### 手动导入当前类
 
 1. 在 VSCode 中打开一个 PHP 文件
 2. 将光标放在要导入的类名上
@@ -130,8 +119,8 @@ class TestClass
 
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
-| `php-use.enableAutoDetect` | Boolean | true | 启用自动检测未使用的导入和未导入的类 |
-| `php-use.showDiagnostics` | Boolean | true | 显示诊断警告（未使用的导入和未导入的类） |
+| `php-use.enableAutoDetect` | Boolean | true | 启用自动检测未使用的导入 |
+| `php-use.showUnusedImportsDiagnostics` | Boolean | false | 显示未使用的导入诊断警告 |
 | `php-use.diagnosticSeverity` | String | Information | 诊断的严重级别（Warning/Information/Hint） |
 | `php-use.showNotifications` | Boolean | false | 当删除未使用的导入时显示通知消息 |
 | `php-use.exclude` | Array | ["**/node_modules/**", "**/vendor/**"] | 排除搜索的文件和文件夹的 glob 模式 |

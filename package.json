@@ -94,16 +94,11 @@
           "default": false,
           "description": "Show diagnostics warnings for unused imports"
         },
-        "php-use.showNonImportedClassesDiagnostics": {
-          "type": "boolean",
-          "default": false,
-          "description": "Show diagnostics warnings for non-imported classes"
-        },
         "php-use.diagnosticSeverity": {
           "type": "string",
           "default": "Information",
           "enum": ["Warning", "Information", "Hint"],
-          "description": "Diagnostic severity level for unused imports and non-imported classes"
+          "description": "Diagnostic severity level for unused imports"
         },
         "php-use.showNotifications": {
           "type": "boolean",

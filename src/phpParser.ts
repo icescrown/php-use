@@ -10,13 +10,6 @@ export interface UseStatement {
 	alias?: string;
 }
 
-export interface UnusedButReferencedClass {
-	className: string;
-	start: number;
-	end: number;
-	line: number;
-}
-
 export class PHPParser {
 
 	public static parseUseStatements(document: vscode.TextDocument): UseStatement[] {
@@ -140,97 +133,6 @@ export class PHPParser {
 		});
 
 		return unusedUseStatements;
-	}
-
-	public static getUnusedButReferencedClasses(document: vscode.TextDocument): UnusedButReferencedClass[] {
-		const text = document.getText();
-		const useStatements = PHPParser.parseUseStatements(document);
-
-		// 收集所有已导入的类和别名
-		const importedClasses = new Map<string, UseStatement>();
-		const aliases = new Map<string, string>(); // alias -> fullClassName
-
-		useStatements.forEach(useStmt => {
-			importedClasses.set(useStmt.className, useStmt);
-
-			// 处理别名
-			if (useStmt.alias) {
-				aliases.set(useStmt.alias, useStmt.className);
-			} else {
-				// 如果没有别名，使用类名的最后一部分作为别名
-				const parts = useStmt.className.split('\\');
-				const simpleName = parts[parts.length - 1];
-				if (simpleName !== useStmt.className) { // 避免为根命名空间的类设置别名
-					aliases.set(simpleName, useStmt.className);
-				}
-			}
-		});
-
-		// 正则表达式匹配类的使用
-		// 匹配new ClassName(), ClassName::method(), extends ClassName, implements ClassName等
-		const classRegex = /\b(new|extends|implements|catch|instanceof)\s+([\w]+)\b/g;
-		// 修改静态调用正则表达式，使用负向后瞻断言排除以$开头的变量名
-		const staticCallRegex = /\b(?<!\$)([\w]+)::/g;
-
-		// 记录所有使用过的类
-		const usedClasses: UnusedButReferencedClass[] = [];
-
-		// 匹配类的使用
-		let match: RegExpExecArray | null;
-		while ((match = classRegex.exec(text)) !== null) {
-			const className = match[2];
-			const line = text.substring(0, match.index).split('\n').length - 1;
-			const classStart = match.index + match[0].indexOf(className);
-			const classEnd = classStart + className.length;
-
-			// 检查是否是已导入的类或别名
-			if (!aliases.has(className)) {
-				// 检查是否是PHP内置类
-				if (!PHPParser.isBuiltinClass(className)) {
-					// 检查是否已经记录过这个位置的类
-					const isDuplicate = usedClasses.some(item => 
-						item.start === classStart && item.end === classEnd
-					);
-
-					if (!isDuplicate) {
-						usedClasses.push({
-							className: className,
-							start: classStart,
-							end: classEnd,
-							line: line
-						});
-					}
-				}
-			}
-		}
-
-		// 匹配静态方法调用
-		while ((match = staticCallRegex.exec(text)) !== null) {
-			const className = match[1];
-			const line = text.substring(0, match.index).split('\n').length - 1;
-
-			// 检查是否是已导入的类或别名
-			if (!aliases.has(className)) {
-				// 检查是否是PHP内置类
-				if (!PHPParser.isBuiltinClass(className)) {
-					// 检查是否已经记录过这个位置的类
-					const isDuplicate = usedClasses.some(item => 
-						item.start === match!.index && item.end === match!.index + className.length
-					);
-
-					if (!isDuplicate) {
-						usedClasses.push({
-							className: className,
-							start: match!.index,
-							end: match!.index + className.length,
-							line: line
-						});
-					}
-				}
-			}
-		}
-
-		return usedClasses;
 	}
 
 	private static isBuiltinClass(className: string): boolean {
