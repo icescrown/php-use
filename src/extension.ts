@@ -11,8 +11,12 @@ function isAutoDetectEnabled() {
 	return getConfiguration().get<boolean>('enableAutoDetect', true);
 }
 
-function isDiagnosticsEnabled() {
-	return getConfiguration().get<boolean>('showDiagnostics', true);
+function isShowUnusedImportsDiagnosticsEnabled() {
+	return getConfiguration().get<boolean>('showUnusedImportsDiagnostics', false);
+}
+
+function isShowNonImportedClassesDiagnosticsEnabled() {
+	return getConfiguration().get<boolean>('showNonImportedClassesDiagnostics', false);
 }
 
 function isNotificationsEnabled() {
@@ -284,48 +288,45 @@ function updateDiagnostics(document: vscode.TextDocument) {
 		return;
 	}
 
-	// 检查是否启用了诊断
-	if (!isDiagnosticsEnabled()) {
-		// 清除诊断信息
-		diagnosticCollection.set(document.uri, []);
-		return;
-	}
-
 	// 创建诊断数组
 	const diagnostics: vscode.Diagnostic[] = [];
 
 	// 添加未使用use语句的诊断
-	const unusedUseStatements = PHPParser.getUnusedUseStatements(document);
-	unusedUseStatements.forEach(useStmt => {
-		const startPos = document.positionAt(useStmt.start);
-		const endPos = document.positionAt(useStmt.end);
-		const range = new vscode.Range(startPos, endPos);
+	if (isShowUnusedImportsDiagnosticsEnabled()) {
+		const unusedUseStatements = PHPParser.getUnusedUseStatements(document);
+		unusedUseStatements.forEach(useStmt => {
+			const startPos = document.positionAt(useStmt.start);
+			const endPos = document.positionAt(useStmt.end);
+			const range = new vscode.Range(startPos, endPos);
 
-		const diagnostic = new vscode.Diagnostic(
-			range,
-			`Unused import: ${useStmt.className}`,
-			getDiagnosticSeverity()
-		);
-		// 设置诊断源，确保与package.json中的配置匹配
-		diagnostic.source = 'php-use';
-		diagnostics.push(diagnostic);
-	});
+			const diagnostic = new vscode.Diagnostic(
+				range,
+				`Unused import: ${useStmt.className}`,
+				getDiagnosticSeverity()
+			);
+			// 设置诊断源，确保与package.json中的配置匹配
+			diagnostic.source = 'php-use';
+			diagnostics.push(diagnostic);
+		});
+	}
 
 	// 添加未导入但使用的类的诊断
-	const unusedButReferencedClasses = PHPParser.getUnusedButReferencedClasses(document);
-	unusedButReferencedClasses.forEach(item => {
-		const startPos = document.positionAt(item.start);
-		const endPos = document.positionAt(item.end);
-		const range = new vscode.Range(startPos, endPos);
+	if (isShowNonImportedClassesDiagnosticsEnabled()) {
+		const unusedButReferencedClasses = PHPParser.getUnusedButReferencedClasses(document);
+		unusedButReferencedClasses.forEach(item => {
+			const startPos = document.positionAt(item.start);
+			const endPos = document.positionAt(item.end);
+			const range = new vscode.Range(startPos, endPos);
 
-		const diagnostic = new vscode.Diagnostic(
-			range,
-			`Class ${item.className} is not imported`,
-			getDiagnosticSeverity()
-		);
-		diagnostic.source = 'php-use';
-		diagnostics.push(diagnostic);
-	});
+			const diagnostic = new vscode.Diagnostic(
+				range,
+				`Class ${item.className} is not imported`,
+				getDiagnosticSeverity()
+			);
+			diagnostic.source = 'php-use';
+			diagnostics.push(diagnostic);
+		});
+	}
 
 	// 设置诊断信息
 	diagnosticCollection.set(document.uri, diagnostics);
@@ -549,11 +550,29 @@ async function importCurrentClass(editor: vscode.TextEditor, className?: string 
 	const text = document.getText();
 	const useStatements = PHPParser.parseUseStatements(document);
 	let insertPosition: vscode.Position;
-	
-	if (useStatements.length > 0) {
-		// 在最后一个use语句之后插入
+
+	// 首先检查是否有namespace语句
+	const currentNamespaceRegex = /\bnamespace\s+([\w\\]+)\s*;/;
+	const namespaceMatch = text.match(currentNamespaceRegex);
+
+	if (namespaceMatch) {
+		// 获取namespace语句的行号
+		const namespaceLine = text.substring(0, namespaceMatch.index).split('\n').length - 1;
+		
+		// 查找namespace语句之后的use语句
+		const useStmtAfterNamespace = useStatements.filter(stmt => stmt.line > namespaceLine);
+		
+		if (useStmtAfterNamespace.length > 0) {
+			// 在最后一个use语句之后插入
+			const lastUseStmt = useStmtAfterNamespace[useStmtAfterNamespace.length - 1];
+			insertPosition = new vscode.Position(lastUseStmt.line + 1, 0);
+		} else {
+			// 在namespace语句之后插入
+			insertPosition = new vscode.Position(namespaceLine + 1, 0);
+		}
+	} else if (useStatements.length > 0) {
+		// 没有namespace语句，但有use语句，在最后一个use语句之后插入
 		const lastUseStmt = useStatements[useStatements.length - 1];
-		const lastUseLine = document.lineAt(lastUseStmt.line);
 		insertPosition = new vscode.Position(lastUseStmt.line + 1, 0);
 	} else {
 		// 查找<?php标签的位置
@@ -562,7 +581,6 @@ async function importCurrentClass(editor: vscode.TextEditor, className?: string 
 		if (phpTagMatch) {
 			// 在<?php标签之后插入
 			const phpTagLine = text.substring(0, phpTagMatch.index).split('\n').length - 1;
-			const phpTagLineObj = document.lineAt(phpTagLine);
 			insertPosition = new vscode.Position(phpTagLine + 1, 0);
 		} else {
 			// 在文件开头插入

@@ -89,10 +89,15 @@
           "default": true,
           "description": "Enable automatic detection of unused imports"
         },
-        "php-use.showDiagnostics": {
+        "php-use.showUnusedImportsDiagnostics": {
           "type": "boolean",
-          "default": true,
-          "description": "Show diagnostics warnings (for unused imports and non-imported classes)"
+          "default": false,
+          "description": "Show diagnostics warnings for unused imports"
+        },
+        "php-use.showNonImportedClassesDiagnostics": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show diagnostics warnings for non-imported classes"
         },
         "php-use.diagnosticSeverity": {
           "type": "string",
@@ -143,9 +148,3 @@
     "@vscode/test-electron": "^2.5.2"
   }
 }
-
-
-
-
-
-
