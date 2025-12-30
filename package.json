@@ -2,7 +2,7 @@
   "name": "php-use",
   "displayName": "%php-use.displayName%",
   "description": "%php-use.description%",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "icescrown",
   "engines": {
     "vscode": "^1.100.0"
@@ -123,6 +123,16 @@
           },
           "default": ["**/node_modules/**", "**/vendor/**"],
           "description": "%php-use.configuration.exclude%"
+        },
+        "php-use.autoSortAfterImports": {
+          "type": "boolean",
+          "default": false,
+          "description": "%php-use.configuration.autoSortAfterImports%"
+        },
+        "php-use.naturalSort": {
+          "type": "boolean",
+          "default": false,
+          "description": "%php-use.configuration.naturalSort%"
         }
       }
     }

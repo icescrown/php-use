@@ -9,5 +9,7 @@
   "php-use.configuration.showUnusedImportsDiagnostics": "显示未使用导入的诊断警告",
   "php-use.configuration.diagnosticSeverity": "未使用导入的诊断严重级别",
   "php-use.configuration.showNotifications": "执行扩展操作时显示通知消息",
-  "php-use.configuration.exclude": "要从搜索中排除的文件和文件夹"
+  "php-use.configuration.exclude": "要从搜索中排除的文件和文件夹",
+  "php-use.configuration.autoSortAfterImports": "添加新导入后自动排序命名空间（默认按字母顺序）",
+  "php-use.configuration.naturalSort": "使用自然顺序算法排序导入项（例如：Item 2 排在 Item 10 之前）"
 }

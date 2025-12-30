@@ -7,6 +7,7 @@
 - **删除未使用的导入**：自动检测并删除 PHP 文件中未使用的 `use` 语句
 - **导入未声明的类**：通过快捷键手动为代码中使用但未导入的类添加 `use` 语句
 - **展开命名空间**：将光标所在类的短类名展开为完整的命名空间路径
+- **自动排序导入**：添加新导入后自动按字母顺序或自然顺序排序命名空间
 - **支持多种 use 语句格式**：完美支持单个 use 语句和分组 use 语句
 - **智能诊断**：实时检测并高亮显示未使用的导入
 - **便捷操作方式**：提供快捷键、右键菜单和快速修复选项
@@ -172,12 +173,51 @@ class TestClass
 | `php-use.diagnosticSeverity` | String | Information | 诊断的严重级别（Warning/Information/Hint） |
 | `php-use.showNotifications` | Boolean | false | 当删除未使用的导入时显示通知消息 |
 | `php-use.exclude` | Array | ["**/node_modules/**", "**/vendor/**"] | 排除搜索的文件和文件夹的 glob 模式 |
+| `php-use.autoSortAfterImports` | Boolean | false | 添加新导入后自动按字母顺序排序命名空间导入 |
+| `php-use.naturalSort` | Boolean | false | 使用自然顺序算法排序导入项（例如：Item 2 排在 Item 10 之前） |
+
+### 排序功能说明
+
+扩展支持两种排序方式：
+
+1. **字母顺序排序**（默认）：按照字母顺序对命名空间进行排序
+2. **自然顺序排序**：使用自然顺序算法，数字部分按数值大小排序
+
+**使用方式：**
+- 只勾选 `php-use.autoSortAfterImports`：自动排序（默认使用字母顺序排序）
+- 同时勾选 `php-use.autoSortAfterImports` 和 `php-use.naturalSort`：使用自然顺序排序
+
+**排序示例：**
+
+字母顺序排序：
+```php
+use App\Models\Item10;
+use App\Models\Item2;
+use App\Models\Item3;
+```
+
+自然顺序排序：
+```php
+use App\Models\Item2;
+use App\Models\Item3;
+use App\Models\Item10;
+```
 
 ## 🐛 已知问题
 
 - 目前没有已知问题。如果您发现了任何问题，请在 [GitHub 仓库](https://github.com/icescrown/php-use/issues) 中提交。
 
 ## 📄 发布说明
+
+### 0.0.2
+
+- 新增自动排序导入功能，支持在添加新导入后自动排序命名空间
+- 新增自然顺序排序选项，使用自然顺序算法对导入项进行排序
+- 新增配置项 `php-use.autoSortAfterImports`：添加新导入后自动按字母顺序排序命名空间导入
+- 新增配置项 `php-use.naturalSort`：使用自然顺序算法排序导入项（例如：Item 2 排在 Item 10 之前）
+- 支持字母顺序排序和自然顺序排序两种排序方式
+- 当同时启用自动排序和自然顺序排序时，采用自然顺序算法
+- 排序始终使用完整类名，确保排序结果的一致性和可预测性
 
 ### 0.0.1
 

@@ -9,5 +9,7 @@
   "php-use.configuration.showUnusedImportsDiagnostics": "Show diagnostics warnings for unused imports",
   "php-use.configuration.diagnosticSeverity": "Diagnostic severity level for unused imports",
   "php-use.configuration.showNotifications": "Show notification messages when performing extension actions",
-  "php-use.configuration.exclude": "Glob patterns for files and folders to exclude from search"
+  "php-use.configuration.exclude": "Glob patterns for files and folders to exclude from search",
+  "php-use.configuration.autoSortAfterImports": "Automatically sort namespace imports after adding new imports (default: alphabetically)",
+  "php-use.configuration.naturalSort": "Sort imports using natural order algorithm (e.g., Item 2 comes before Item 10)"
 }

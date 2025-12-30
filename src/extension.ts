@@ -41,6 +41,53 @@ function getDiagnosticSeverity() {
 	return vscode.DiagnosticSeverity[severity as keyof typeof vscode.DiagnosticSeverity] || vscode.DiagnosticSeverity.Information;
 }
 
+function isAutoSortAfterImportsEnabled() {
+	return getConfiguration().get<boolean>('autoSortAfterImports', false);
+}
+
+function isNaturalSortEnabled() {
+	return getConfiguration().get<boolean>('naturalSort', false);
+}
+
+function sortUseStatements(editor: vscode.TextEditor) {
+	const document = editor.document;
+	const useStatements = PHPParser.parseUseStatements(document);
+	
+	if (useStatements.length < 2) {
+		return;
+	}
+	
+	const text = document.getText();
+	const lines = text.split('\n');
+	
+	const useStmtLines = useStatements.map(stmt => ({
+		line: stmt.line,
+		className: stmt.className,
+		alias: stmt.alias,
+		originalText: lines[stmt.line]
+	}));
+	
+	const useNaturalSort = isNaturalSortEnabled();
+	const sortedLines = [...useStmtLines].sort((a, b) => {
+		if (useNaturalSort) {
+			return a.className.localeCompare(b.className, undefined, { numeric: true });
+		} else {
+			return a.className.localeCompare(b.className);
+		}
+	});
+	
+	const lineNumbers = useStmtLines.map(stmt => stmt.line);
+	const minLine = Math.min(...lineNumbers);
+	const maxLine = Math.max(...lineNumbers);
+	
+	const startRange = new vscode.Range(minLine, 0, maxLine, lines[maxLine].length);
+	
+	editor.edit(editBuilder => {
+		const sortedText = sortedLines.map(stmt => stmt.originalText).join('\n');
+		editBuilder.replace(startRange, sortedText);
+	});
+}
+
 export function activate(context: vscode.ExtensionContext) {
 
 	diagnosticCollection = vscode.languages.createDiagnosticCollection('php-use');
@@ -475,6 +522,10 @@ async function importCurrentClass(editor: vscode.TextEditor, className?: string 
 	await editor.edit(editBuilder => {
         editBuilder.insert(insertPosition, useStatement);
 	});
+	
+	if (isAutoSortAfterImportsEnabled()) {
+		sortUseStatements(editor);
+	}
 	
 	showMessage(t('importedClass', { className, namespace: selectedClass.namespace }));
 }
