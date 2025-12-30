@@ -1,0 +1,13 @@
+{
+  "php-use.displayName": "PHP Use 语句管理",
+  "php-use.description": "管理 PHP use 语句",
+  "php-use.command.removeUnusedImports": "移除未使用的导入",
+  "php-use.command.importCurrentClass": "导入当前类",
+  "php-use.command.expandNamespace": "展开命名空间",
+  "php-use.configuration.title": "PHP Use 语句管理",
+  "php-use.configuration.enableAutoDetect": "启用未使用导入的自动检测",
+  "php-use.configuration.showUnusedImportsDiagnostics": "显示未使用导入的诊断警告",
+  "php-use.configuration.diagnosticSeverity": "未使用导入的诊断严重级别",
+  "php-use.configuration.showNotifications": "执行扩展操作时显示通知消息",
+  "php-use.configuration.exclude": "要从搜索中排除的文件和文件夹"
+}

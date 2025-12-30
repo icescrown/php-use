@@ -6,6 +6,7 @@
 
 - **删除未使用的导入**：自动检测并删除 PHP 文件中未使用的 `use` 语句
 - **导入未声明的类**：通过快捷键手动为代码中使用但未导入的类添加 `use` 语句
+- **展开命名空间**：将光标所在类的短类名展开为完整的命名空间路径
 - **支持多种 use 语句格式**：完美支持单个 use 语句和分组 use 语句
 - **智能诊断**：实时检测并高亮显示未使用的导入
 - **便捷操作方式**：提供快捷键、右键菜单和快速修复选项
@@ -35,6 +36,13 @@
 3. 使用快捷键 `Ctrl+Alt+I` (Windows/Linux) 或 `Cmd+Alt+I` (Mac)
 4. 如果有多个匹配的类，选择你想要导入的类
 5. 扩展将自动添加相应的 `use` 语句
+
+### 展开命名空间
+
+1. 在 VSCode 中打开一个 PHP 文件
+2. 将光标放在要展开的类名上（该类必须有对应的 `use` 语句）
+3. 使用快捷键 `Ctrl+Alt+E` (Windows/Linux) 或 `Cmd+Alt+E` (Mac)
+4. 扩展将自动将该类的短类名替换为完整的命名空间路径
 
 ## 📝 示例
 
@@ -109,6 +117,46 @@ class TestClass
     {
         $user = new User();
         return $user;
+    }
+}
+```
+
+### 展开命名空间
+
+**使用前：**
+```php
+<?php
+
+use App\Models\User;
+use App\Models\Post;
+
+class TestClass
+{
+    public function testMethod()
+    {
+        $user = new User();
+        $post = new Post();
+        
+        return [$user, $post];
+    }
+}
+```
+
+**使用后（将光标放在 User 上并按 Ctrl+Alt+E）：**
+```php
+<?php
+
+use App\Models\User;
+use App\Models\Post;
+
+class TestClass
+{
+    public function testMethod()
+    {
+        $user = new \App\Models\User();
+        $post = new Post();
+        
+        return [$user, $post];
     }
 }
 ```

@@ -1,7 +1,7 @@
 {
   "name": "php-use",
-  "displayName": "php use",
-  "description": "Manage PHP use statements",
+  "displayName": "%php-use.displayName%",
+  "description": "%php-use.description%",
   "version": "0.0.1",
   "publisher": "icescrown",
   "engines": {
@@ -22,12 +22,17 @@
     "commands": [
       {
         "command": "php-use.removeUnusedImports",
-        "title": "Remove Unused Imports",
+        "title": "%php-use.command.removeUnusedImports%",
         "category": "PHP"
       },
       {
         "command": "php-use.importCurrentClass",
-        "title": "Import Current Class",
+        "title": "%php-use.command.importCurrentClass%",
+        "category": "PHP"
+      },
+      {
+        "command": "php-use.expandNamespace",
+        "title": "%php-use.command.expandNamespace%",
         "category": "PHP"
       }
     ],
@@ -42,6 +47,12 @@
         "command": "php-use.importCurrentClass",
         "key": "ctrl+alt+i",
         "mac": "cmd+alt+i",
+        "when": "editorLangId == php"
+      },
+      {
+        "command": "php-use.expandNamespace",
+        "key": "ctrl+alt+e",
+        "mac": "cmd+alt+e",
         "when": "editorLangId == php"
       }
     ],
@@ -82,28 +93,28 @@
       ]
     },
     "configuration": {
-      "title": "php use",
+      "title": "%php-use.configuration.title%",
       "properties": {
         "php-use.enableAutoDetect": {
           "type": "boolean",
           "default": true,
-          "description": "Enable automatic detection of unused imports"
+          "description": "%php-use.configuration.enableAutoDetect%"
         },
         "php-use.showUnusedImportsDiagnostics": {
           "type": "boolean",
-          "default": false,
-          "description": "Show diagnostics warnings for unused imports"
+          "default": true,
+          "description": "%php-use.configuration.showUnusedImportsDiagnostics%"
         },
         "php-use.diagnosticSeverity": {
           "type": "string",
           "default": "Information",
           "enum": ["Warning", "Information", "Hint"],
-          "description": "Diagnostic severity level for unused imports"
+          "description": "%php-use.configuration.diagnosticSeverity%"
         },
         "php-use.showNotifications": {
           "type": "boolean",
-          "default": false,
-          "description": "Show notification messages when removing unused imports"
+          "default": true,
+          "description": "%php-use.configuration.showNotifications%"
         },
         "php-use.exclude": {
           "type": "array",
@@ -111,7 +122,7 @@
             "type": "string"
           },
           "default": ["**/node_modules/**", "**/vendor/**"],
-          "description": "Glob patterns for files and folders to exclude from search"
+          "description": "%php-use.configuration.exclude%"
         }
       }
     }
