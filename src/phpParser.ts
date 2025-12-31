@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-// 导入外部的PHP内置类列表
 import { phpBuiltinClasses } from './phpBuiltinClasses';
 
 export interface UseStatement {
@@ -16,12 +15,9 @@ export class PHPParser {
 		const text = document.getText();
 		const useStatements: UseStatement[] = [];
 
-		// 正则表达式匹配use语句
-		// 处理普通use语句和分组use语句
 		const useRegex = /\buse\s+([\w\\]+)(?:\s+as\s+([\w]+))?\s*;/g;
 		const groupUseRegex = /\buse\s+([\w\\]+)\s*\{\s*([\w\\,\s]+)\s*\}\s*;/g;
 
-		// 匹配普通use语句
 		let match: RegExpExecArray | null;
 		while ((match = useRegex.exec(text)) !== null) {
 			const className = match[1];
@@ -37,18 +33,14 @@ export class PHPParser {
 			});
 		}
 
-		// 匹配分组use语句
 		while ((match = groupUseRegex.exec(text)) !== null) {
 			const namespace = match[1];
 			const classListStr = match[2];
 			const line = text.substring(0, match.index).split('\n').length - 1;
 
-			// 解析类列表
 			const classList = classListStr.split(',').map(c => c.trim()).filter(c => c !== '');
 			classList.forEach(className => {
-				// 构建完整的类名
 				const fullClassName = namespace + '\\' + className;
-				// 计算该类在字符串中的位置
 				const classStart = match!.index + match![0].indexOf(className);
 
 				useStatements.push({
@@ -67,41 +59,32 @@ export class PHPParser {
 		const text = document.getText();
 		const useStatements = PHPParser.parseUseStatements(document);
 
-		// 收集所有已导入的类和别名
 		const importedClasses = new Map<string, UseStatement>();
-		const aliases = new Map<string, string>(); // alias -> fullClassName
+		const aliases = new Map<string, string>();
 
 		useStatements.forEach(useStmt => {
 			importedClasses.set(useStmt.className, useStmt);
 
-			// 处理别名
 			if (useStmt.alias) {
 				aliases.set(useStmt.alias, useStmt.className);
 			} else {
-				// 如果没有别名，使用类名的最后一部分作为别名
 				const parts = useStmt.className.split('\\');
 				const simpleName = parts[parts.length - 1];
-				if (simpleName !== useStmt.className) { // 避免为根命名空间的类设置别名
+				if (simpleName !== useStmt.className) {
 					aliases.set(simpleName, useStmt.className);
 				}
 			}
 		});
 
-		// 正则表达式匹配类的使用
-		// 匹配new ClassName(), ClassName::method(), extends ClassName, implements ClassName等
 		const classUsageRegex = /\b(new|extends|implements|catch|instanceof)\s+([\w\\]+)\b/g;
-		// 修改静态调用正则表达式，排除以$开头的变量名
 		const staticCallRegex = /\b(?<!\$)([\w\\]+)::/g;
 
-		// 记录所有使用过的类
 		const usedClasses = new Set<string>();
 
-		// 匹配类的使用
 		let match;
 		while ((match = classUsageRegex.exec(text)) !== null) {
 			let className = match[2];
 
-			// 检查是否是别名
 			if (aliases.has(className)) {
 				className = aliases.get(className)!;
 			}
@@ -109,11 +92,9 @@ export class PHPParser {
 			usedClasses.add(className);
 		}
 
-		// 匹配静态方法调用
 		while ((match = staticCallRegex.exec(text)) !== null) {
 			let className = match[1];
 
-			// 检查是否是别名
 			if (aliases.has(className)) {
 				className = aliases.get(className)!;
 			}
@@ -121,11 +102,9 @@ export class PHPParser {
 			usedClasses.add(className);
 		}
 
-		// 筛选出未使用的use语句
 		const unusedUseStatements: UseStatement[] = [];
 		useStatements.forEach(useStmt => {
 			if (!usedClasses.has(useStmt.className)) {
-				// 检查是否是PHP内置类或全局命名空间的类
 				if (!PHPParser.isBuiltinClass(useStmt.className)) {
 					unusedUseStatements.push(useStmt);
 				}
@@ -136,12 +115,10 @@ export class PHPParser {
 	}
 
 	private static isBuiltinClass(className: string): boolean {
-		// PHP特殊关键字，不需要导入
 		const specialKeywords = ['self', 'parent', 'static'];
 		if (specialKeywords.includes(className)) {
 			return true;
 		}
-		// 使用外部导入的PHP内置类列表
 		return phpBuiltinClasses.includes(className);
 	}
 
@@ -149,7 +126,6 @@ export class PHPParser {
 		const text = document.getText();
 		const offset = document.offsetAt(position);
 
-		// 正则表达式匹配类名（由字母、数字、下划线组成）
 		const wordRegex = /([a-zA-Z0-9_]+)/g;
 		let match;
 
@@ -157,18 +133,6 @@ export class PHPParser {
 			if (match.index <= offset && match.index + match[0].length >= offset) {
 				return match[0];
 			}
-		}
-
-		return null;
-	}
-
-	public static parseNamespace(document: vscode.TextDocument): string | null {
-		const text = document.getText();
-		const namespaceRegex = /\bnamespace\s+([\w\\]+)\s*;/;
-		const match = text.match(namespaceRegex);
-
-		if (match) {
-			return match[1];
 		}
 
 		return null;

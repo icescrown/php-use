@@ -9,7 +9,7 @@ function getConfiguration() {
 }
 
 function isAutoDetectEnabled() {
-	return getConfiguration().get<boolean>('enableAutoDetect', true);
+	return getConfiguration().get<boolean>('detectUnusedImports', true);
 }
 
 function isShowUnusedImportsDiagnosticsEnabled() {

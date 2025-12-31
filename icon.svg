@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#5C9CE6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3D7BC8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" rx="16" fill="url(#gradient)"/>
+  <text x="64" y="55" font-family="Arial, sans-serif" font-size="30" font-weight="normal" fill="#FFFFFF" text-anchor="middle" opacity="0.9">PHP</text>
+  <text x="64" y="95" font-family="Arial, sans-serif" font-size="48" font-weight="normal" fill="#FFFFFF" text-anchor="middle">use</text>
+</svg>

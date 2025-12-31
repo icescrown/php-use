@@ -18,15 +18,15 @@ const translations: Translations = {
 	},
 	'noUnusedImports': {
 		en: 'No unused imports found!',
-		zh: '未发现未使用的导入！'
+		zh: '未发现未使用的 use 语句！'
 	},
 	'removedUnusedImports': {
 		en: 'Removed {count} unused import(s)!',
-		zh: '已移除 {count} 个未使用的导入！'
+		zh: '已移除 {count} 个未使用的 use 语句！'
 	},
 	'failedToRemoveImports': {
 		en: 'Failed to remove unused imports!',
-		zh: '移除未使用的导入失败！'
+		zh: '移除未使用的 use 语句失败！'
 	},
 	'noWorkspaceFolder': {
 		en: 'No workspace folder found!',
@@ -34,7 +34,7 @@ const translations: Translations = {
 	},
 	'classNotFound': {
 		en: 'Class {className} not found in workspace!',
-		zh: '在工作区中未找到类 {className}！'
+		zh: '在工作区中未找到 {className}！'
 	},
 	'noClassNameAtCursor': {
 		en: 'No class name found at cursor position!',
@@ -42,19 +42,19 @@ const translations: Translations = {
 	},
 	'classAlreadyImported': {
 		en: 'Class {className} is already imported!',
-		zh: '类 {className} 已经导入！'
+		zh: '{className} 已经导入！'
 	},
 	'importedClass': {
 		en: 'Imported class {className} from {namespace}!',
-		zh: '已从 {namespace} 导入类 {className}！'
+		zh: '已从 {namespace} 导入 {className}！'
 	},
 	'noOccurrencesFound': {
 		en: 'No occurrences found to replace for class: {className}',
-		zh: '未找到需要替换的类: {className}'
+		zh: '未找到需要替换的 {className}！'
 	},
 	'expandedNamespace': {
 		en: 'Expanded {className} to {fullClassName}, {count} occurrence(s) replaced',
-		zh: '已将 {className} 展开为 {fullClassName}，共 {count} 处'
+		zh: '已将 {className} 展开为 {fullClassName}，共 {count} 处替换'
 	},
 	'failedToExpandNamespace': {
 		en: 'Failed to expand namespace!',
