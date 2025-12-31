@@ -1,7 +1,7 @@
 {
   "name": "php-use",
-  "displayName": "%php-use.displayName%",
-  "description": "%php-use.description%",
+  "displayName": "PHP Use",
+  "description": "Manage PHP use statements",
   "version": "0.0.1",
   "publisher": "icescrown",
   "icon": "icon.png",
