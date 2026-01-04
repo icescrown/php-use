@@ -1,15 +1,15 @@
 {
-  "php-use.displayName": "PHP Use",
-  "php-use.description": "管理 PHP use 语句",
-  "php-use.command.removeUnusedImports": "移除未使用的 use 语句",
-  "php-use.command.importCurrentClass": "导入当前类",
-  "php-use.command.expandNamespace": "展开命名空间",
-  "php-use.configuration.title": "PHP Use",
-  "php-use.configuration.detectUnusedImports": "自动检测未使用的 use 语句",
-  "php-use.configuration.showUnusedImportsDiagnostics": "显示未使用 use 语句的诊断警告",
-  "php-use.configuration.diagnosticSeverity": "未使用 use 语句的诊断严重级别",
-  "php-use.configuration.showNotifications": "执行扩展操作时显示通知消息",
-  "php-use.configuration.exclude": "要从搜索中排除的文件和文件夹",
-  "php-use.configuration.autoSortAfterImports": "添加新 use 语句后自动排序命名空间（默认按字母顺序）",
-  "php-use.configuration.naturalSort": "使用自然顺序算法排序 use 语句（例如：Item 2 排在 Item 10 之前）"
+  "ext.displayName": "PHP Use",
+  "ext.description": "管理 PHP use 语句",
+  "ext.command.removeUnusedImports": "移除未使用的 use 语句",
+  "ext.command.importCurrentClass": "导入当前类",
+  "ext.command.expandNamespace": "展开命名空间",
+  "ext.configuration.title": "PHP Use",
+  "ext.configuration.detectUnusedImports": "自动检测未使用的 use 语句",
+  "ext.configuration.showUnusedImportsDiagnostics": "显示未使用 use 语句的诊断警告",
+  "ext.configuration.diagnosticSeverity": "未使用 use 语句的诊断严重级别",
+  "ext.configuration.showNotifications": "执行扩展操作时显示通知消息",
+  "ext.configuration.exclude": "要从搜索中排除的文件和文件夹",
+  "ext.configuration.autoSortAfterImports": "添加新 use 语句后自动排序命名空间（默认按字母顺序）",
+  "ext.configuration.naturalSort": "使用自然顺序算法排序 use 语句（例如：Item 2 排在 Item 10 之前）"
 }

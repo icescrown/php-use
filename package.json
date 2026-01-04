@@ -1,8 +1,8 @@
 {
   "name": "php-use",
-  "displayName": "%php-use.displayName%",
-  "description": "%php-use.description%",
-  "version": "0.0.1",
+  "displayName": "%ext.displayName%",
+  "description": "%ext.description%",
+  "version": "0.0.2",
   "publisher": "icescrown",
   "icon": "icon.png",
   "engines": {
@@ -23,17 +23,17 @@
     "commands": [
       {
         "command": "php-use.removeUnusedImports",
-        "title": "%php-use.command.removeUnusedImports%",
+        "title": "%ext.command.removeUnusedImports%",
         "category": "PHP"
       },
       {
         "command": "php-use.importCurrentClass",
-        "title": "%php-use.command.importCurrentClass%",
+        "title": "%ext.command.importCurrentClass%",
         "category": "PHP"
       },
       {
         "command": "php-use.expandNamespace",
-        "title": "%php-use.command.expandNamespace%",
+        "title": "%ext.command.expandNamespace%",
         "category": "PHP"
       }
     ],
@@ -96,17 +96,17 @@
       ]
     },
     "configuration": {
-      "title": "%php-use.configuration.title%",
+      "title": "%ext.configuration.title%",
       "properties": {
         "php-use.detectUnusedImports": {
           "type": "boolean",
           "default": true,
-          "description": "%php-use.configuration.detectUnusedImports%"
+          "description": "%ext.configuration.detectUnusedImports%"
         },
         "php-use.showUnusedImportsDiagnostics": {
           "type": "boolean",
           "default": false,
-          "description": "%php-use.configuration.showUnusedImportsDiagnostics%"
+          "description": "%ext.configuration.showUnusedImportsDiagnostics%"
         },
         "php-use.diagnosticSeverity": {
           "type": "string",
@@ -116,12 +116,12 @@
             "Information",
             "Hint"
           ],
-          "description": "%php-use.configuration.diagnosticSeverity%"
+          "description": "%ext.configuration.diagnosticSeverity%"
         },
         "php-use.showNotifications": {
           "type": "boolean",
           "default": true,
-          "description": "%php-use.configuration.showNotifications%"
+          "description": "%ext.configuration.showNotifications%"
         },
         "php-use.exclude": {
           "type": "array",
@@ -132,17 +132,17 @@
             "**/node_modules/**",
             "**/vendor/**"
           ],
-          "description": "%php-use.configuration.exclude%"
+          "description": "%ext.configuration.exclude%"
         },
         "php-use.autoSortAfterImports": {
           "type": "boolean",
           "default": false,
-          "description": "%php-use.configuration.autoSortAfterImports%"
+          "description": "%ext.configuration.autoSortAfterImports%"
         },
         "php-use.naturalSort": {
           "type": "boolean",
           "default": false,
-          "description": "%php-use.configuration.naturalSort%"
+          "description": "%ext.configuration.naturalSort%"
         }
       }
     }

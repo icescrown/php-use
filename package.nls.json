@@ -1,15 +1,15 @@
 {
-  "php-use.displayName": "php use",
-  "php-use.description": "Manage PHP use statements",
-  "php-use.command.removeUnusedImports": "Remove Unused Imports",
-  "php-use.command.importCurrentClass": "Import Current Class",
-  "php-use.command.expandNamespace": "Expand Namespace",
-  "php-use.configuration.title": "php use",
-  "php-use.configuration.detectUnusedImports": "Automatically detect unused use statements",
-  "php-use.configuration.showUnusedImportsDiagnostics": "Show diagnostics warnings for unused imports",
-  "php-use.configuration.diagnosticSeverity": "Diagnostic severity level for unused imports",
-  "php-use.configuration.showNotifications": "Show notification messages when performing extension actions",
-  "php-use.configuration.exclude": "Glob patterns for files and folders to exclude from search",
-  "php-use.configuration.autoSortAfterImports": "Automatically sort namespace imports after adding new imports (default: alphabetically)",
-  "php-use.configuration.naturalSort": "Sort imports using natural order algorithm (e.g., Item 2 comes before Item 10)"
+  "ext.displayName": "php use",
+  "ext.description": "Manage PHP use statements",
+  "ext.command.removeUnusedImports": "Remove Unused Imports",
+  "ext.command.importCurrentClass": "Import Current Class",
+  "ext.command.expandNamespace": "Expand Namespace",
+  "ext.configuration.title": "php use",
+  "ext.configuration.detectUnusedImports": "Automatically detect unused use statements",
+  "ext.configuration.showUnusedImportsDiagnostics": "Show diagnostics warnings for unused imports",
+  "ext.configuration.diagnosticSeverity": "Diagnostic severity level for unused imports",
+  "ext.configuration.showNotifications": "Show notification messages when performing extension actions",
+  "ext.configuration.exclude": "Glob patterns for files and folders to exclude from search",
+  "ext.configuration.autoSortAfterImports": "Automatically sort namespace imports after adding new imports (default: alphabetically)",
+  "ext.configuration.naturalSort": "Sort imports using natural order algorithm (e.g., Item 2 comes before Item 10)"
 }
