@@ -238,7 +238,7 @@ function removeUnusedImports(editor: vscode.TextEditor) {
 			const lineText = line.text;
 
 			if (lineText.includes('{') && lineText.includes('}')) {
-				const match = lineText.match(/^\s*use\s+([\w\\]+)\s*\{\s*([\w\\,\s]+)\s*\}\s*;/);
+				const match = lineText.match(/^\s*use\s+(?:function\s+|const\s+)?([\w\\]+)\s*\{\s*([\w\\,\s]+)\s*\}\s*;/);
 				if (match) {
 					const namespace = match[1];
 					const classListStr = match[2];
@@ -259,7 +259,7 @@ function removeUnusedImports(editor: vscode.TextEditor) {
 					}
 				}
 			} else {
-				const match = lineText.match(/^\s*use\s+([\w\\]+)(?:\s+as\s+([\w]+))?\s*;/);
+				const match = lineText.match(/^\s*use\s+(?:function\s+|const\s+)?([\w\\]+)(?:\s+as\s+([\w]+))?\s*;/);
 				if (match) {
 					const className = match[1];
 					if (unusedClasses.has(className)) {
