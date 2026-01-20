@@ -10,6 +10,7 @@
 - **自动排序 use 语句**：添加新 use 语句后自动按字母顺序或自然顺序排序命名空间
 - **支持多种 use 语句格式**：完美支持单个 use 语句和分组 use 语句
 - **智能诊断**：实时检测并高亮显示未使用的 use 语句
+- **支持 PHPDoc 类型检测**：自动识别 PHPDoc 注释中的类引用（@param、@return、@throws、@var、@type）
 - **便捷操作方式**：提供快捷键、右键菜单和快速修复选项
 - **个性化配置**：支持多种可自定义的设置选项
 - **仅针对 PHP 文件**：安全可靠，避免意外修改其他类型的文件
@@ -161,6 +162,41 @@ class TestClass
     }
 }
 ```
+
+### PHPDoc 类型检测
+
+扩展会自动识别 PHPDoc 注释中的类引用，包括：
+
+```php
+<?php
+
+use App\Models\User;
+use App\Models\Post;
+use App\Exceptions\ValidationException;
+
+class UserService
+{
+    /**
+     * @param User $user 用户对象
+     * @return User|Post 返回用户或帖子对象
+     * @throws ValidationException 当验证失败时抛出
+     * @var User $currentUser 当前用户
+     */
+    public function processUser(User $user)
+    {
+        return $user;
+    }
+}
+```
+
+在上面的示例中，`User`、`Post` 和 `ValidationException` 都会被检测为已使用，不会被标记为未使用的 use 语句。
+
+支持的 PHPDoc 标签：
+- `@param` - 函数参数类型
+- `@return` - 返回类型
+- `@throws` - 抛出的异常类型
+- `@var` - 变量类型
+- `@type` - 类型注解
 
 ## ⚙️ 扩展设置
 

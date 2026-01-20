@@ -13,4 +13,15 @@ class TestClass
         return $user; 
     } 
 
+    public function phpDocMethod()
+    {
+        /**
+         * @return User|Post
+         * @throws TestException
+         * @param Comment $comment
+         * @var User $user
+         * @type Post $post
+         */
+        return 'test';
+    }
 }

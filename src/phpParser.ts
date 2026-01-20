@@ -23,6 +23,13 @@ export class PHPParser {
 		/:\s*([\w\\]+)(?:\s*[|&]\s*[\w\\]+)*\s*[;{]/g,
 		/\b(?:public|private|protected|var|readonly)\s+([\w\\]+)(?:\s*[|&]\s*[\w\\]+)*\s*\$/g
 	];
+	private static readonly PHPDOC_REGEXES = [
+		/\*\s*@param\s+\$\w+\s+([\w\\|]+)/g,
+		/\*\s*@return\s+([\w\\|]+)/g,
+		/\*\s*@throws\s+([\w\\]+)/g,
+		/\*\s*@var\s+([\w\\|]+)/g,
+		/\*\s*@type\s+([\w\\|]+)/g
+	];
 	private static readonly SPECIAL_KEYWORDS = ['self', 'parent', 'static'];
 
 	private static detectUseType(match: string): 'class' | 'function' {
@@ -144,7 +151,32 @@ export class PHPParser {
 			}
 		});
 
+		this.PHPDOC_REGEXES.forEach(regex => {
+			let match;
+			while ((match = regex.exec(text)) !== null) {
+				const typeString = match[1];
+				this.extractClassesFromPhpDoc(typeString, usedClasses, aliases);
+			}
+		});
+
 		return usedClasses;
+	}
+
+	private static extractClassesFromPhpDoc(typeString: string, usedClasses: Set<string>, aliases: Map<string, AliasInfo>): void {
+		const classPattern = /([A-Z][\w\\]+)/g;
+		let match;
+		while ((match = classPattern.exec(typeString)) !== null) {
+			const className = match[1];
+			if (className.includes('\\')) {
+				const resolvedName = this.resolveAlias(className, aliases);
+				usedClasses.add(resolvedName);
+			} else {
+				const aliasInfo = aliases.get(className);
+				if (aliasInfo?.type === 'class') {
+					usedClasses.add(aliasInfo.className);
+				}
+			}
+		}
 	}
 
 	private static findUsedFunctions(
