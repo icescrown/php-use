@@ -2,7 +2,7 @@
   "ext.displayName": "php use",
   "ext.description": "Manage PHP use statements",
   "ext.command.removeUnusedImports": "Remove Unused Imports",
-  "ext.command.importCurrentClass": "Import Current Class",
+  "ext.command.importCurrentClass": "Import Class / Function",
   "ext.command.expandNamespace": "Expand Namespace",
   "ext.configuration.title": "php use",
   "ext.configuration.detectUnusedImports": "Automatically detect unused use statements",

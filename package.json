@@ -2,7 +2,7 @@
   "name": "php-use",
   "displayName": "%ext.displayName%",
   "description": "%ext.description%",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "icescrown",
   "icon": "icon.png",
   "engines": {

@@ -2,7 +2,7 @@
   "ext.displayName": "PHP Use",
   "ext.description": "管理 PHP use 语句",
   "ext.command.removeUnusedImports": "移除未使用的 use 语句",
-  "ext.command.importCurrentClass": "导入当前类",
+  "ext.command.importCurrentClass": "导入当前类 / 函数",
   "ext.command.expandNamespace": "展开命名空间",
   "ext.configuration.title": "PHP Use",
   "ext.configuration.detectUnusedImports": "自动检测未使用的 use 语句",

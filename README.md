@@ -5,10 +5,12 @@
 ## ✨ 功能特性
 
 - **删除未使用的 use 语句**：自动检测并删除 PHP 文件中未使用的 `use` 语句
-- **导入未声明的类**：通过快捷键手动为代码中使用但未导入的类添加 `use` 语句
+- **导入未声明的类 / 函数**：通过快捷键为代码中使用但未导入的类或函数添加 `use` 语句，函数自动生成 `use function` 形式
+- **工作区符号索引**：后台自动索引工作区中的类和函数定义，导入时毫秒级响应，文件变化实时增量更新
+- **同名符号智能处理**：多个同名定义时弹出候选列表区分选择；与已有 use 语句同名冲突时自动生成别名
 - **展开命名空间**：将光标所在类的短类名展开为完整的命名空间路径
 - **自动排序 use 语句**：添加新 use 语句后自动按字母顺序或自然顺序排序命名空间
-- **支持多种 use 语句格式**：完美支持单个 use 语句和分组 use 语句
+- **支持多种 use 语句格式**：完美支持单个 use 语句和分组 use 语句（含 `use function` 分组）
 - **智能诊断**：实时检测并高亮显示未使用的 use 语句
 - **支持 PHPDoc 类型检测**：自动识别 PHPDoc 注释中的类引用（@param、@return、@throws、@var、@type）
 - **便捷操作方式**：提供快捷键、右键菜单和快速修复选项
@@ -31,13 +33,18 @@
    - 当检测到未使用的 use 语句时，点击灯泡图标并选择 "Remove unused imports"
 3. 扩展将自动删除所有未使用的 `use` 语句
 
-### 导入未声明的类
+### 导入未声明的类 / 函数
 
 1. 在 VSCode 中打开一个 PHP 文件
-2. 将光标放在要导入的类名上
+2. 将光标放在要导入的类名或函数名上
 3. 使用快捷键 `Ctrl+Alt+I` (Windows/Linux) 或 `Cmd+Alt+I` (Mac)
-4. 如果有多个匹配的类，选择你想要导入的类
-5. 扩展将自动添加相应的 `use` 语句
+4. 如果有多个同名定义，选择你想要导入的符号（函数条目带 `[function]` 标记）
+5. 扩展将自动添加相应的 `use` 语句：
+   - 类 → `use App\Models\User;`
+   - 函数 → `use function App\Helpers\format_price;`
+6. 如果与已有 use 语句简单名冲突，会自动生成别名（如 `use Vendor\Lib\User as LibUser;`）
+
+> 💡 符号查找基于工作区索引，插件激活时后台自动构建，文件变化实时更新，导入操作即时响应。
 
 ### 展开命名空间
 
@@ -119,6 +126,37 @@ class TestClass
     {
         $user = new User();
         return $user;
+    }
+}
+```
+
+### 导入函数
+
+**使用前：**
+```php
+<?php
+
+class TestClass
+{
+    public function testMethod()
+    {
+        // format_price 函数未导入
+        return format_price(100);
+    }
+}
+```
+
+**使用后（将光标放在 format_price 上并按 Ctrl+Alt+I）：**
+```php
+<?php
+
+use function App\Helpers\format_price;
+
+class TestClass
+{
+    public function testMethod()
+    {
+        return format_price(100);
     }
 }
 ```
@@ -244,6 +282,13 @@ use App\Models\Item10;
 - 目前没有已知问题。如果您发现了任何问题，请在 [GitHub 仓库](https://github.com/icescrown/php-use/issues) 中提交。
 
 ## 📄 发布说明
+
+### 0.0.6
+
+- 新增函数导入支持，光标放在函数名上即可生成 `use function` 语句
+- 新增工作区符号索引，后台预建 + 实时增量更新，导入毫秒级响应
+- 同名符号弹出候选列表区分选择，同名冲突自动生成别名
+- 多项性能与稳定性优化，详见 [CHANGELOG.md](CHANGELOG.md)
 
 ### 0.0.5
 

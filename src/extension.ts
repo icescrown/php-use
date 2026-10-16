@@ -91,7 +91,16 @@ function sortUseStatements(editor: vscode.TextEditor) {
 export function activate(context: vscode.ExtensionContext) {
 
 	diagnosticCollection = vscode.languages.createDiagnosticCollection('php-use');
-	
+
+	// Keep the symbol index up to date as files change
+	const fileWatcher = vscode.workspace.createFileSystemWatcher('**/*.php');
+	fileWatcher.onDidChange(uri => { void scanFileIntoIndex(uri); });
+	fileWatcher.onDidCreate(uri => { void scanFileIntoIndex(uri); });
+	fileWatcher.onDidDelete(uri => { removeFileFromIndex(uri.fsPath); });
+
+	// Pre-build the symbol index in the background so the first import is instant
+	void ensureSymbolIndex().catch(() => { /* failure surfaced via notification */ });
+
 	const disposable = vscode.commands.registerCommand('php-use.removeUnusedImports', () => {
 		const editor = vscode.window.activeTextEditor;
 		if (!editor) {
@@ -204,6 +213,7 @@ export function activate(context: vscode.ExtensionContext) {
 		expandNamespaceCommand,
 		diagnosticCollection,
 		codeActionProvider,
+		fileWatcher,
 		didOpenSubscription,
 		didSaveSubscription,
 		didChangeSubscription,
@@ -317,97 +327,222 @@ export function deactivate() {
 	}
 }
 
-async function findClassInWorkspace(className: string, quickPickTitle: string): Promise<{ filePath: string; namespace: string; fullClassName: string } | null> {
-	const workspaceFolders = vscode.workspace.workspaceFolders;
-	if (!workspaceFolders) {
-		showMessage(t('noWorkspaceFolder'), 'error');
-		return null;
-	}
-	
-	const foundClasses: Array<{ filePath: string; namespace: string; fullClassName: string }> = [];
-	
-	const simpleClassRegex = new RegExp('\\bclass\\s+' + className + '\\b', 'i');
-	const namespaceRegex = /namespace\s+([\w\\]+)\s*;/;
-	
-	const exactFilePattern = '**/' + className + '.php';
-	const exactResults = await searchFilesForClass(exactFilePattern, className, simpleClassRegex, namespaceRegex);
-	
-	foundClasses.push(...exactResults);
-	
-	if (foundClasses.length === 0) {
-		const allFilesPattern = '**/*.php';
-		const allResults = await searchFilesForClass(allFilesPattern, className, simpleClassRegex, namespaceRegex);
-		foundClasses.push(...allResults);
-	}
-	
-	if (foundClasses.length === 0) {
-		showMessage(t('classNotFound', { className }), 'error');
-		return null;
-	}
-	
-	if (foundClasses.length === 1) {
-		return foundClasses[0];
-	}
-	
-	const items: vscode.QuickPickItem[] = foundClasses.map(cls => ({
-		label: cls.fullClassName,
-		description: cls.filePath
-	}));
+type SymbolType = 'class' | 'function';
 
-	const selectedItem = await vscode.window.showQuickPick(items, {
-		title: quickPickTitle,
-		placeHolder: 'Choose a class from the list...'
-	});
-
-	if (!selectedItem) {
-		return null;
-	}
-
-	return foundClasses[items.indexOf(selectedItem)];
+interface SymbolMatch {
+	filePath: string;
+	namespace: string;
+	fullName: string;
+	type: SymbolType;
 }
 
-async function processFileForClass(file: vscode.Uri, className: string, simpleClassRegex: RegExp, namespaceRegex: RegExp): Promise<{ filePath: string; namespace: string; fullClassName: string } | null> {
+interface SymbolIndexEntry extends SymbolMatch {
+	name: string;
+}
+
+// --- Workspace symbol index (built lazily on first import, then kept up to date) ---
+
+const NAMESPACE_REGEX = /namespace\s+([\w\\]+)\s*;/;
+
+const fileSymbols = new Map<string, SymbolIndexEntry[]>();
+const nameIndex = new Map<string, SymbolIndexEntry[]>(); // key: lowercase symbol name
+let indexPromise: Promise<void> | null = null;
+
+function ensureSymbolIndex(): Promise<void> {
+	if (!indexPromise) {
+		indexPromise = buildSymbolIndex();
+		indexPromise.catch(error => {
+			// Allow retrying on the next import if the initial build failed
+			indexPromise = null;
+			console.error('Symbol index build failed:', error);
+			showMessage(t('symbolIndexFailed'), 'error');
+		});
+	}
+	return indexPromise;
+}
+
+async function buildSymbolIndex(): Promise<void> {
+	const excludePatterns = getExcludePatterns();
+	const excludeGlob = '{' + excludePatterns.join(',') + '}';
+	const files = await vscode.workspace.findFiles('**/*.php', excludeGlob);
+	await Promise.all(files.map(file => scanFileIntoIndex(file)));
+}
+
+async function scanFileIntoIndex(file: vscode.Uri): Promise<void> {
 	try {
 		const fileContent = await vscode.workspace.fs.readFile(file);
 		const content = Buffer.from(fileContent).toString('utf8');
 
-		if (simpleClassRegex.test(content)) {
-			const namespaceMatch = content.match(namespaceRegex);
-			const namespace = namespaceMatch ? namespaceMatch[1] : '';
-			const fullClassName = namespace ? namespace + '\\' + className : className;
+		const namespaceMatch = content.match(NAMESPACE_REGEX);
+		const namespace = namespaceMatch ? namespaceMatch[1] : '';
+		const entries: SymbolIndexEntry[] = [];
 
-			return {
-				filePath: file.fsPath,
-				namespace: namespace,
-				fullClassName: fullClassName
-			};
+		// Local instances: global regexes have lastIndex state and are scanned concurrently
+		// Only match top-level function declarations (start of a line), so class methods are excluded
+		const classRegex = /\bclass\s+([A-Za-z_]\w*)/g;
+		const functionRegex = /(^|\n)\s*function\s+([A-Za-z_]\w*)\s*\(/g;
+
+		let match: RegExpExecArray | null;
+		while ((match = classRegex.exec(content)) !== null) {
+			entries.push(makeIndexEntry(match[1], namespace, file.fsPath, 'class'));
+		}
+		while ((match = functionRegex.exec(content)) !== null) {
+			entries.push(makeIndexEntry(match[2], namespace, file.fsPath, 'function'));
+		}
+
+		removeFileFromIndex(file.fsPath);
+		fileSymbols.set(file.fsPath, entries);
+		entries.forEach(addToNameIndex);
+	} catch (error) {
+		console.error('Failed to index file: ' + file.fsPath, error);
+	}
+}
+
+function makeIndexEntry(name: string, namespace: string, filePath: string, type: SymbolType): SymbolIndexEntry {
+	return {
+		name,
+		namespace,
+		fullName: namespace ? namespace + '\\' + name : name,
+		filePath,
+		type
+	};
+}
+
+function addToNameIndex(entry: SymbolIndexEntry): void {
+	const key = entry.name.toLowerCase();
+	const list = nameIndex.get(key);
+	if (list) {
+		list.push(entry);
+	} else {
+		nameIndex.set(key, [entry]);
+	}
+}
+
+function removeFileFromIndex(filePath: string): void {
+	const oldEntries = fileSymbols.get(filePath);
+	if (!oldEntries) {
+		return;
+	}
+
+	oldEntries.forEach(entry => {
+		const key = entry.name.toLowerCase();
+		const list = nameIndex.get(key);
+		if (list) {
+			const idx = list.indexOf(entry);
+			if (idx >= 0) {
+				list.splice(idx, 1);
+			}
+			if (list.length === 0) {
+				nameIndex.delete(key);
+			}
+		}
+	});
+	fileSymbols.delete(filePath);
+}
+
+async function findSymbolInWorkspace(symbolName: string, quickPickTitle: string, typeFilter?: SymbolType): Promise<SymbolMatch | null> {
+	if (!vscode.workspace.workspaceFolders) {
+		showMessage(t('noWorkspaceFolder'), 'error');
+		return null;
+	}
+
+	// Fast path: a file named exactly like the symbol usually defines it (PSR-style)
+	const exactResults = await searchExactFileForSymbol(symbolName, typeFilter);
+	if (exactResults.length > 0) {
+		return pickSymbolFromMatches(exactResults, quickPickTitle);
+	}
+
+	// Full path: build (or reuse) the workspace symbol index, then look up in memory.
+	// Only show the progress popup while actually building; awaiting a ready index is silent.
+	try {
+		if (indexPromise) {
+			await indexPromise;
+		} else {
+			await vscode.window.withProgress(
+				{ location: vscode.ProgressLocation.Notification, title: t('buildingSymbolIndex') },
+				() => ensureSymbolIndex()
+			);
+		}
+	} catch (error) {
+		// Failure already surfaced via notification inside ensureSymbolIndex
+		return null;
+	}
+
+	const allEntries = nameIndex.get(symbolName.toLowerCase()) ?? [];
+	const matches = typeFilter ? allEntries.filter(entry => entry.type === typeFilter) : allEntries;
+
+	if (matches.length === 0) {
+		showMessage(t('symbolNotFound', { className: symbolName }), 'error');
+		return null;
+	}
+
+	return pickSymbolFromMatches(matches, quickPickTitle);
+}
+
+function pickSymbolFromMatches(matches: SymbolMatch[], quickPickTitle: string): Promise<SymbolMatch | null> {
+	if (matches.length === 1) {
+		return Promise.resolve(matches[0]);
+	}
+
+	const items: vscode.QuickPickItem[] = matches.map(symbol => ({
+		label: symbol.fullName,
+		description: (symbol.type === 'function' ? '[function] ' : '') + symbol.filePath
+	}));
+
+	return Promise.resolve(vscode.window.showQuickPick(items, {
+		title: quickPickTitle,
+		placeHolder: 'Choose a symbol from the list...'
+	}).then(selectedItem => selectedItem ? matches[items.indexOf(selectedItem)] : null));
+}
+
+async function searchExactFileForSymbol(symbolName: string, typeFilter?: SymbolType): Promise<SymbolMatch[]> {
+	const definitionRegexes: Array<{ regex: RegExp; type: SymbolType }> = [];
+	if (!typeFilter || typeFilter === 'class') {
+		definitionRegexes.push({ regex: new RegExp('\\bclass\\s+' + symbolName + '\\b', 'i'), type: 'class' });
+	}
+	if (!typeFilter || typeFilter === 'function') {
+		definitionRegexes.push({ regex: new RegExp('(^|\\n)\\s*function\\s+' + symbolName + '\\s*\\(', 'i'), type: 'function' });
+	}
+
+	try {
+		const excludePatterns = getExcludePatterns();
+		const excludeGlob = '{' + excludePatterns.join(',') + '}';
+		const files = await vscode.workspace.findFiles('**/' + symbolName + '.php', excludeGlob);
+
+		const results = await Promise.all(
+			files.map(file => processFileForSymbol(file, symbolName, definitionRegexes))
+		);
+		return results.filter((result): result is SymbolMatch => result !== null);
+	} catch (error) {
+		console.error('Exact file search failed:', error);
+		return [];
+	}
+}
+
+async function processFileForSymbol(file: vscode.Uri, symbolName: string, definitionRegexes: Array<{ regex: RegExp; type: SymbolType }>): Promise<SymbolMatch | null> {
+	try {
+		const fileContent = await vscode.workspace.fs.readFile(file);
+		const content = Buffer.from(fileContent).toString('utf8');
+
+		for (const definition of definitionRegexes) {
+			if (definition.regex.test(content)) {
+				const namespaceMatch = content.match(NAMESPACE_REGEX);
+				const namespace = namespaceMatch ? namespaceMatch[1] : '';
+				const fullName = namespace ? namespace + '\\' + symbolName : symbolName;
+
+				return {
+					filePath: file.fsPath,
+					namespace: namespace,
+					fullName: fullName,
+					type: definition.type
+				};
+			}
 		}
 		return null;
 	} catch (error) {
 		console.error('Failed to read file: ' + file.fsPath, error);
 		return null;
 	}
-}
-
-async function searchFilesForClass(filePattern: string, className: string, simpleClassRegex: RegExp, namespaceRegex: RegExp): Promise<Array<{ filePath: string; namespace: string; fullClassName: string }>> {
-	const foundClasses: Array<{ filePath: string; namespace: string; fullClassName: string }> = [];
-	
-	try {
-		const excludePatterns = getExcludePatterns();
-		const excludeGlob = '{' + excludePatterns.join(',') + '}';
-		
-		const files = await vscode.workspace.findFiles(filePattern, excludeGlob);
-		
-		const results = await Promise.all(
-			files.map(async (file) => processFileForClass(file, className, simpleClassRegex, namespaceRegex))
-		);
-		
-		foundClasses.push(...results.filter((result): result is { filePath: string; namespace: string; fullClassName: string } => result !== null));
-	} catch (error) {
-		console.error('File search failed:', error);
-	}
-	
-	return foundClasses;
 }
 
 async function importCurrentClass(editor: vscode.TextEditor, className?: string | null) {
@@ -422,29 +557,31 @@ async function importCurrentClass(editor: vscode.TextEditor, className?: string 
 		}
 	}
 
-	const selectedClass = await findClassInWorkspace(className, 'Select which ' + className + ' class to import');
-	
-	if (!selectedClass) {
+	const selectedSymbol = await findSymbolInWorkspace(className, 'Select which ' + className + ' to import');
+
+	if (!selectedSymbol) {
 		return;
 	}
+
+	const isFunction = selectedSymbol.type === 'function';
+	const fullClassName = selectedSymbol.fullName;
 	
 	const text = document.getText();
 	const useStatements = PHPParser.parseUseStatements(document);
 	
 	const getLineFromIndex = (index: number): number => text.substring(0, index).split('\n').length - 1;
 	const getSimpleName = (fullClassName: string): string => fullClassName.split('\\').pop() || fullClassName;
-	const getInsertPositionAfterLine = (line: number): vscode.Position => {
+	const getInsertPositionAfterLine = (line: number): { position: vscode.Position; needNewLine: boolean } => {
 		const lines = text.split('\n');
 		const nextLineContent = lines[line + 1]?.trim() || '';
-		
+
 		if (nextLineContent === '') {
-			return new vscode.Position(line + 2, 0);
-		} else {
-			needNewLine = true;
-			return new vscode.Position(line + 1, 0);
+			return { position: new vscode.Position(line + 2, 0), needNewLine: false };
 		}
+		// Next line is not empty, so the new use statement needs a blank line after it
+		return { position: new vscode.Position(line + 1, 0), needNewLine: true };
 	};
-	
+
 	let insertPosition: vscode.Position;
 	let needNewLine = false;
 
@@ -454,12 +591,14 @@ async function importCurrentClass(editor: vscode.TextEditor, className?: string 
 	if (namespaceMatch) {
 		const namespaceLine = getLineFromIndex(namespaceMatch.index!);
 		const useStmtAfterNamespace = useStatements.filter(stmt => stmt.line > namespaceLine);
-		
+
 		if (useStmtAfterNamespace.length > 0) {
 			const lastUseStmt = useStmtAfterNamespace[useStmtAfterNamespace.length - 1];
 			insertPosition = new vscode.Position(lastUseStmt.line + 1, 0);
 		} else {
-			insertPosition = getInsertPositionAfterLine(namespaceLine);
+			const resolved = getInsertPositionAfterLine(namespaceLine);
+			insertPosition = resolved.position;
+			needNewLine = resolved.needNewLine;
 		}
 	} else if (useStatements.length > 0) {
 		const lastUseStmt = useStatements[useStatements.length - 1];
@@ -467,52 +606,49 @@ async function importCurrentClass(editor: vscode.TextEditor, className?: string 
 	} else {
 		const phpTagRegex = /<\?php/i;
 		const phpTagMatch = text.match(phpTagRegex);
-		
+
 		if (phpTagMatch) {
 			const phpTagLine = getLineFromIndex(phpTagMatch.index!);
-			insertPosition = getInsertPositionAfterLine(phpTagLine);
+			const resolved = getInsertPositionAfterLine(phpTagLine);
+			insertPosition = resolved.position;
+			needNewLine = resolved.needNewLine;
 		} else {
 			insertPosition = new vscode.Position(0, 0);
 		}
 	}
 	
-	const simpleClassName = getSimpleName(selectedClass.fullClassName);
-	
-	const exactMatch = useStatements.find(stmt => stmt.className === selectedClass.fullClassName);
+	const simpleClassName = getSimpleName(fullClassName);
+
+	const exactMatch = useStatements.find(stmt => stmt.className === fullClassName && (stmt.type === 'function') === isFunction);
 	if (exactMatch) {
-		showMessage(t('classAlreadyImported', { className: selectedClass.fullClassName }));
+		showMessage(t('symbolAlreadyImported', { className: fullClassName }));
 		return;
 	}
-	
-	const existingUseWithSameName = useStatements.find(stmt => getSimpleName(stmt.className) === simpleClassName);
-	
+
+	const existingUseWithSameName = useStatements.find(stmt => (stmt.type === 'function') === isFunction && getSimpleName(stmt.className) === simpleClassName);
+
 	let useStatement = '';
 	if (existingUseWithSameName) {
-		const namespaceParts = selectedClass.fullClassName.split('\\');
+		const namespaceParts = fullClassName.split('\\');
 		const namespacePart = namespaceParts.length > 1 ? namespaceParts[namespaceParts.length - 2] : '';
 		const namespacePartCapitalized = namespacePart.charAt(0).toUpperCase() + namespacePart.slice(1);
 		let alias = namespacePartCapitalized + simpleClassName;
-		
+
 		let counter = 1;
 		while (true) {
-			const aliasExists = useStatements.find(stmt => {
-				if (stmt.alias === alias) {
-					return stmt.className !== selectedClass.fullClassName;
-				}
-				return false;
-			});
-			
+			const aliasExists = useStatements.find(stmt => stmt.alias === alias && stmt.className !== fullClassName);
+
 			if (!aliasExists) {
 				break;
 			}
-			
+
 			alias = namespacePartCapitalized + simpleClassName + counter;
 			counter++;
 		}
-		
-		useStatement = 'use ' + selectedClass.fullClassName + ' as ' + alias + ';\n';
+
+		useStatement = (isFunction ? 'use function ' : 'use ') + fullClassName + ' as ' + alias + ';\n';
 	} else {
-		useStatement = 'use ' + selectedClass.fullClassName + ';\n';
+		useStatement = (isFunction ? 'use function ' : 'use ') + fullClassName + ';\n';
 	}
 	
 	if (needNewLine) {
@@ -527,7 +663,11 @@ async function importCurrentClass(editor: vscode.TextEditor, className?: string 
 		sortUseStatements(editor);
 	}
 	
-	showMessage(t('importedClass', { className, namespace: selectedClass.namespace }));
+	if (isFunction) {
+		showMessage(t('importedFunction', { className, namespace: selectedSymbol.namespace }));
+	} else {
+		showMessage(t('importedClass', { className, namespace: selectedSymbol.namespace }));
+	}
 }
 
 async function expandNamespace(editor: vscode.TextEditor) {
@@ -540,14 +680,14 @@ async function expandNamespace(editor: vscode.TextEditor) {
 		return;
 	}
 	
-	const selectedClass = await findClassInWorkspace(className, 'Select which ' + className + ' class to expand');
-	
+	const selectedClass = await findSymbolInWorkspace(className, 'Select which ' + className + ' class to expand', 'class');
+
 	if (!selectedClass) {
 		return;
 	}
-	
+
 	const text = document.getText();
-	const fullClassName = selectedClass.fullClassName;
+	const fullClassName = selectedClass.fullName;
 	
 	const classRegex = new RegExp('\\b' + className + '\\b', 'g');
 	let match;

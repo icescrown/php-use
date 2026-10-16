@@ -32,21 +32,33 @@ const translations: Translations = {
 		en: 'No workspace folder found!',
 		zh: '未找到工作区文件夹！'
 	},
-	'classNotFound': {
-		en: 'Class {className} not found in workspace!',
-		zh: '在工作区中未找到 {className}！'
-	},
 	'noClassNameAtCursor': {
-		en: 'No class name found at cursor position!',
-		zh: '光标位置未找到类名！'
-	},
-	'classAlreadyImported': {
-		en: 'Class {className} is already imported!',
-		zh: '{className} 已经导入！'
+		en: 'No class or function name found at cursor position!',
+		zh: '光标位置未找到类名或函数名！'
 	},
 	'importedClass': {
 		en: 'Imported class {className} from {namespace}!',
 		zh: '已从 {namespace} 导入 {className}！'
+	},
+	'importedFunction': {
+		en: 'Imported function {className} from {namespace}!',
+		zh: '已从 {namespace} 导入函数 {className}！'
+	},
+	'symbolAlreadyImported': {
+		en: '{className} is already imported!',
+		zh: '{className} 已经导入！'
+	},
+	'symbolNotFound': {
+		en: 'Symbol {className} not found in workspace!',
+		zh: '在工作区中未找到 {className}！'
+	},
+	'buildingSymbolIndex': {
+		en: 'Indexing PHP symbols (first import only)...',
+		zh: '正在索引 PHP 符号（仅首次导入需要）...'
+	},
+	'symbolIndexFailed': {
+		en: 'Failed to build PHP symbol index! Check the console for details.',
+		zh: 'PHP 符号索引构建失败！详情请查看控制台。'
 	},
 	'noOccurrencesFound': {
 		en: 'No occurrences found to replace for class: {className}',
